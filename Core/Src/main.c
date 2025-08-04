@@ -15,6 +15,9 @@
  *
  ******************************************************************************
  */
+
+#include "lwip/api.h"
+
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -153,6 +156,10 @@ int main(void)
     /* USER CODE BEGIN WHILE */
     while (1)
     {
+        // Notify user via red LED about failure condition.
+        HAL_GPIO_TogglePin(GPIOB, LD3_Pin);
+
+        osDelay(250 /*ms*/);
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -386,6 +393,65 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+static void tcpecho_thread(void *arg)
+{
+    /* Create a new connection identifier. */
+    struct netconn * const conn = netconn_new(NETCONN_TCP);
+    if (conn != NULL)
+    {
+        /* Bind connection to port number. */
+        err_t const err = netconn_bind(conn, /*IP*/ NULL, /*port*/ 7);
+        if (err == ERR_OK)
+        {
+            /* Tell connection to go into listening mode. */
+            netconn_listen(conn);
+            while (1)
+            {
+                /* Grab new connection. */
+                struct netconn * newconn = NULL;
+                err_t const accept_err = netconn_accept(conn, &newconn);
+                /* Process the new connection. */
+                if (accept_err == ERR_OK)
+                {
+                    struct netbuf *buf;
+                    while (netconn_recv(newconn, &buf) == ERR_OK)
+                    {
+                        do
+                        {
+                            void * data = NULL;
+                            u16_t len = 0;
+                            /*err_t const data_success =*/ netbuf_data(buf, &data, &len);
+                            // data_success @todo
+                            netconn_write(newconn, data, len, NETCONN_COPY);
+                        }
+                        while (netbuf_next(buf) >= 0);
+                        netbuf_delete(buf);
+                    }
+                    /* Close connection and discard connection identifier. */
+                    netconn_close(newconn);
+                    netconn_delete(newconn);
+                }
+                else
+                {
+                    // @todo
+                    int const bla = 3;
+                }
+            }
+        }
+        else
+        {
+            netconn_delete(conn);
+        }
+    }
+}
+
+
+void tcpecho_init(void)
+{
+    sys_thread_new("tcpecho_thread", tcpecho_thread, NULL,
+                   DEFAULT_THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
+}
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -400,6 +466,9 @@ void StartDefaultTask(void *argument)
     /* init code for LWIP */
     MX_LWIP_Init();
     /* USER CODE BEGIN 5 */
+
+    tcpecho_init();
+
     /* Infinite loop */
     for(;;)
     {
