@@ -56,7 +56,7 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
         .name = "defaultTask",
-        .stack_size = 256 * 4,
+        .stack_size = 512 * 4,
         .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
@@ -395,12 +395,14 @@ static void MX_GPIO_Init(void)
 
 static void tcpecho_thread(void *arg)
 {
+    LWIP_UNUSED_ARG(arg);
+
     /* Create a new connection identifier. */
     struct netconn * const conn = netconn_new(NETCONN_TCP);
     if (conn != NULL)
     {
         /* Bind connection to port number. */
-        err_t const err = netconn_bind(conn, /*IP*/ NULL, /*port*/ 7);
+        err_t const err = netconn_bind(conn, /*IP*/ IP_ADDR_ANY, /*port*/ 7);
         if (err == ERR_OK)
         {
             /* Tell connection to go into listening mode. */
@@ -413,6 +415,9 @@ static void tcpecho_thread(void *arg)
                 /* Process the new connection. */
                 if (accept_err == ERR_OK)
                 {
+                    char const greeting[] = "Hello, World!\n";
+                    netconn_write(newconn, &greeting, 14, NETCONN_COPY);
+
                     struct netbuf *buf;
                     while (netconn_recv(newconn, &buf) == ERR_OK)
                     {
@@ -434,7 +439,6 @@ static void tcpecho_thread(void *arg)
                 else
                 {
                     // @todo
-                    int const bla = 3;
                 }
             }
         }
@@ -452,6 +456,63 @@ void tcpecho_init(void)
                    DEFAULT_THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
 }
 
+
+
+
+
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+#define UDPECHO_THREAD_PRIO  ( tskIDLE_PRIORITY + 4 )
+#define UDP_SERVER_PORT 7
+
+/*-----------------------------------------------------------------------------------*/
+static void udpecho_thread(void *arg)
+{
+    LWIP_UNUSED_ARG(arg);
+
+    struct netconn *conn = NULL;
+    struct netbuf *buf = NULL;
+    ip_addr_t *addr = NULL;
+    unsigned short port = 0;
+
+    err_t err = ~ERR_OK;
+    err_t recv_err = ~ERR_OK;
+
+    conn = netconn_new(NETCONN_UDP);
+    if (conn!= NULL)
+    {
+        err = netconn_bind(conn, IP_ADDR_ANY, UDP_SERVER_PORT);
+        if (err == ERR_OK)
+        {
+            while (1)
+            {
+                recv_err = netconn_recv(conn, &buf);
+
+                if (recv_err == ERR_OK)
+                {
+                    addr = netbuf_fromaddr(buf);
+                    port = netbuf_fromport(buf);
+                    netconn_connect(conn, addr, port);
+                    buf->addr.addr = 0;
+
+                    netconn_send(conn,buf);
+                    netbuf_delete(buf);
+                }
+            }
+        }
+        else
+        {
+            netconn_delete(conn);
+        }
+    }
+}
+/*-----------------------------------------------------------------------------------*/
+void udpecho_init(void)
+{
+    sys_thread_new("udpecho_thread", udpecho_thread, NULL, DEFAULT_THREAD_STACKSIZE,UDPECHO_THREAD_PRIO );
+}
+
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -467,7 +528,8 @@ void StartDefaultTask(void *argument)
     MX_LWIP_Init();
     /* USER CODE BEGIN 5 */
 
-    tcpecho_init();
+    // tcpecho_init();
+    udpecho_init();
 
     /* Infinite loop */
     for(;;)
