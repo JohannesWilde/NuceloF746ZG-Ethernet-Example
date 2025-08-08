@@ -432,7 +432,17 @@ static void tcpecho_thread(void *arg)
                             u16_t len = 0;
                             /*err_t const data_success =*/ netbuf_data(buf, &data, &len);
                             // data_success @todo
-                            netconn_write(newconn, data, len, NETCONN_COPY);
+
+                            if ((1 == len) && ('2' == ((uint8_t const *)data)[0]))
+                            {
+                                // Toggle LD2.
+                                HAL_GPIO_TogglePin(GPIOB, LD2_Pin);
+                            }
+                            else
+                            {
+                                // Mirror input.
+                                netconn_write(newconn, data, len, NETCONN_COPY);
+                            }
                         }
                         while (netbuf_next(buf) >= 0);
                         netbuf_delete(buf);
@@ -525,8 +535,8 @@ void StartDefaultTask(void *argument)
     MX_LWIP_Init();
     /* USER CODE BEGIN 5 */
 
-    // tcpecho_init();
-    udpecho_init();
+    tcpecho_init();
+    // udpecho_init();
 
     /* Infinite loop */
     for(;;)
