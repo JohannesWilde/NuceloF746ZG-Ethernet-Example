@@ -43,7 +43,8 @@
 #define ETHIF_TX_TIMEOUT (2000U)
 /* USER CODE BEGIN OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Stack size of the interface thread */
-#define INTERFACE_THREAD_STACK_SIZE ( 4096 )
+/* See STM32F746ZGTX_FLASH.ld - _Min_Stack_Size = 0x400 = 1024 [also LWIP\App\lwip.c - INTERFACE_THREAD_STACK_SIZE]. */
+#define INTERFACE_THREAD_STACK_SIZE ( 1024 )
 /* USER CODE END OS_THREAD_STACK_SIZE_WITH_RTOS */
 /* Network interface name */
 #define IFNAME0 's'
