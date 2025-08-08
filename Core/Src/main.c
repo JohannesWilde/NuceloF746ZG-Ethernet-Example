@@ -393,6 +393,11 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+#define XXPECHO_THREAD_PRIO  ( tskIDLE_PRIORITY + 4 )
+#define XXP_SERVER_PORT 7
+
 static void tcpecho_thread(void *arg)
 {
     LWIP_UNUSED_ARG(arg);
@@ -402,7 +407,7 @@ static void tcpecho_thread(void *arg)
     if (conn != NULL)
     {
         /* Bind connection to port number. */
-        err_t const err = netconn_bind(conn, /*IP*/ IP_ADDR_ANY, /*port*/ 7);
+        err_t const err = netconn_bind(conn, /*IP*/ IP_ADDR_ANY, /*port*/ XXP_SERVER_PORT);
         if (err == ERR_OK)
         {
             /* Tell connection to go into listening mode. */
@@ -453,17 +458,9 @@ static void tcpecho_thread(void *arg)
 void tcpecho_init(void)
 {
     sys_thread_new("tcpecho_thread", tcpecho_thread, NULL,
-                   DEFAULT_THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
+                   DEFAULT_THREAD_STACKSIZE, XXPECHO_THREAD_PRIO);
 }
 
-
-
-
-
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-#define UDPECHO_THREAD_PRIO  ( tskIDLE_PRIORITY + 4 )
-#define UDP_SERVER_PORT 7
 
 /*-----------------------------------------------------------------------------------*/
 static void udpecho_thread(void *arg)
@@ -479,9 +476,9 @@ static void udpecho_thread(void *arg)
     err_t recv_err = ~ERR_OK;
 
     conn = netconn_new(NETCONN_UDP);
-    if (conn!= NULL)
+    if (conn != NULL)
     {
-        err = netconn_bind(conn, IP_ADDR_ANY, UDP_SERVER_PORT);
+        err = netconn_bind(conn, IP_ADDR_ANY, XXP_SERVER_PORT);
         if (err == ERR_OK)
         {
             while (1)
@@ -509,7 +506,7 @@ static void udpecho_thread(void *arg)
 /*-----------------------------------------------------------------------------------*/
 void udpecho_init(void)
 {
-    sys_thread_new("udpecho_thread", udpecho_thread, NULL, DEFAULT_THREAD_STACKSIZE,UDPECHO_THREAD_PRIO );
+    sys_thread_new("udpecho_thread", udpecho_thread, NULL, DEFAULT_THREAD_STACKSIZE, XXPECHO_THREAD_PRIO);
 }
 
 
