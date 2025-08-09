@@ -420,7 +420,7 @@ static void tcpecho_thread(void *arg)
                 /* Process the new connection. */
                 if (accept_err == ERR_OK)
                 {
-                    char const greeting[] = "Hello, World!\n";
+                    static char const greeting[] = "Hello, World!\n";
                     netconn_write(newconn, &greeting, 14, NETCONN_COPY);
 
                     struct netbuf *buf;
