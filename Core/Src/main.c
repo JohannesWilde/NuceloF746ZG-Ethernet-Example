@@ -548,6 +548,10 @@ void StartDefaultTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
+        static UBaseType_t value = 0xffffffff; // high water mark in words [4 bytes per word for STM32 F746]
+        UBaseType_t newValue = uxTaskGetStackHighWaterMark(NULL);
+        value = (newValue < value) ? newValue : value;
+
         HAL_GPIO_TogglePin(GPIOB, LD1_Pin);
 
         osDelay(500 /*ms*/);
