@@ -5,3 +5,4 @@ My attempts at getting the NUCLEO-F746ZG to work with RTOS and Ethernet - as it 
 The main points of interest were:
 
   - https://community.st.com/t5/stm32-mcus-embedded-software/stack-overflow-in-freeartos-and-ethernet/td-p/782263
+  - https://community.st.com/t5/stm32-mcus-boards-and-hardware/how-to-skip-the-interruption-while-debugging-stm32f746-discovery/td-p/320355

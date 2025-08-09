@@ -89,6 +89,11 @@ int main(void)
 
     /* USER CODE BEGIN 1 */
 
+    /* As per https://community.st.com/t5/stm32-mcus-boards-and-hardware/how-to-skip-the-interruption-while-debugging-stm32f746-discovery/td-p/320355
+     * try to improve debugging on buggy ARM Core-M7 r0p1. */
+    DBGMCU->APB1FZ = 0xFFFFFFFF;
+    DBGMCU->APB2FZ = 0xFFFFFFFF;
+
     /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
