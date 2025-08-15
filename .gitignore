@@ -53,3 +53,6 @@ release
 
 # MXcube stuff
 .mxproject
+
+# CMake build directories
+config_default
