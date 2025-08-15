@@ -548,9 +548,22 @@ void StartDefaultTask(void *argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		static UBaseType_t value = 0xffffffff; // high water mark in words [4 bytes per word for STM32 F746]
-		UBaseType_t newValue = uxTaskGetStackHighWaterMark(NULL);
-		value = (newValue < value) ? newValue : value;
+#ifndef NDEBUG
+		static UBaseType_t highWatermarkMin = 0xffffffff; // high water mark in words [4 bytes per word for STM32 F746]
+		static osThreadId_t runningThreads[16] = {0, };
+		uint32_t const numberOfThreads = osThreadEnumerate(runningThreads, 16);
+		for (uint32_t threadIndex = 0; numberOfThreads > threadIndex; ++threadIndex)
+		{
+			UBaseType_t const highWatermark = uxTaskGetStackHighWaterMark(runningThreads[threadIndex]);
+			char const * const name = osThreadGetName(runningThreads[threadIndex]);
+			// @todo: log?
+			highWatermarkMin = (highWatermark < highWatermarkMin) ? highWatermark : highWatermarkMin;
+		}
+#endif // NDEBUG
+
+		// static UBaseType_t value = 0xffffffff; // high water mark in words [4 bytes per word for STM32 F746]
+		// UBaseType_t newValue = uxTaskGetStackHighWaterMark(NULL);
+		// value = (newValue < value) ? newValue : value;
 
 		HAL_GPIO_TogglePin(GPIOB, LD1_Pin);
 
