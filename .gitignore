@@ -55,4 +55,5 @@ release
 .mxproject
 
 # CMake build directories
+build
 config_default
